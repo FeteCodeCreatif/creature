@@ -7,8 +7,10 @@ void setup() {
 
   rectMode(CENTER);
 
+
   macreature = new Creature();
   
+
 }
 
 void draw() {
