@@ -12,15 +12,15 @@ class Creature {
   Creature() {
     loc = new PVector(random(width), random(height));
     vel = new PVector();
-    //acc = new PVector(-0.001, 0.01);
     topspeed = 5;
     rad = 10;
   }
 
-  void avance(String move, float v) { //UPDATE
+  public Creature avance(String move, float v) { //UPDATE
     if (!once) {
       vel = new PVector(random(-v, v), random(-v, v));
       once = true;
+      
     }
 
     if (move == "toutdroit") {
@@ -44,15 +44,18 @@ class Creature {
       serpent.remove(0);
     }
 
+  return this;
+  
   } 
 
-  void alaforme(String forme) { //DISPLAY
+  public Creature alaforme(String forme) { //DISPLAY
     if (forme == "boule") {
       ellipse(loc.x, loc.y, rad, rad);
     } else if (forme == "carre") {
       rect(loc.x, loc.y, rad, rad);
     } else if (forme == "serpent") {
       beginShape();
+      noFill();
       for (int i = 0; i <= serpent.size()-1; i++) {
         PVector a = (PVector) serpent.get(i);
         curveVertex(a.x, a.y);
@@ -60,6 +63,7 @@ class Creature {
       endShape();
     } else if (forme == "pieuvre") {
     }
+    return this;
   }
 
   void passe() {
@@ -77,7 +81,7 @@ class Creature {
     }
   }
 
-  void rebondis() {
+  public Creature rebondis() {
     if ((loc.x > width) || (loc.x < 0)) {
       if (loc.x > width) { 
         loc.x = width;
@@ -94,5 +98,7 @@ class Creature {
       }
       vel.y = vel.y * -1;
     }
-  }
+    return this;  
+}
+  
 }

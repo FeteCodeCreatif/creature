@@ -1,5 +1,4 @@
-Creature c1;
-Creature c2;
+Creature macreature;
 
 void setup() {
   size(400, 400);
@@ -8,20 +7,20 @@ void setup() {
 
   rectMode(CENTER);
 
-  c1 = new Creature();
-  c2 = new Creature();
+  macreature = new Creature();
+  
 }
 
 void draw() {
+  
+  background(255, 255, 255, 0);
 
-  background(255);
-  c1.alaforme("serpent");
-  c1.avance("touslessens", 10);
-  c1.rebondis();
-
-  c2.alaforme("boule");
-  c2.avance("serpent", 4);
-  c2.passe();
+  macreature
+    .corps("serpent")
+    .aubord("rebondis")
+    .couleurs("aquatique")
+    .tete("horrible")
+ 
 }
 
 /*
