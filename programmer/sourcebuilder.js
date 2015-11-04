@@ -2,7 +2,7 @@ getCompleteSource = function(codefragment) {
 
   $.get(
 
-    "creatureclass.pde",
+    "creatureclass/creatureclass.pde",
 
     function(text) {
 

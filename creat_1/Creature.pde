@@ -48,7 +48,7 @@ class Creature {
   
   } 
 
-  public Creature alaforme(String forme) { //DISPLAY
+  public Creature corps(String forme) { //DISPLAY
     if (forme == "boule") {
       ellipse(loc.x, loc.y, rad, rad);
     } else if (forme == "carre") {
