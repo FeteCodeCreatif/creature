@@ -66,6 +66,7 @@ class Creature {
   float widthedge;
   float heightedge;
 
+  //CREATURE CLASS STARTS HERE
   Creature() {
     mass = 1;
     coeffsize = 50;
