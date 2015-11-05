@@ -39,52 +39,190 @@ int horrible = 16;
 
 class Creature {
   //MOVE
-  PVector loc;
-  PVector vel; 
+  PVector loc; // Position
+  PVector vel; // Velocity
+  PVector acc; // Acceleration
+  PVector target; // Cible
+  PVector dir; // Direction
+  PVector st; // Steering
 
   //PARAMETERS
-  int c_;
-  int main;
-  int taillebras;
-  int nbbras;
-  color couleur;
-  int tete;
+  int c;
+  int m;
+  float tb;
+  float nbb;
+  color co;
+  int tt;
 
   //GLOBALS
   float basespeed;
+  float finalspeed;
+  float mass;
   float coeffsize;
   float theta;
+  boolean once_tb;
+  boolean once_nbb;
+  float maxforce;
+  float widthedge;
+  float heightedge;
 
   Creature() {
-    loc = new PVector(0, 0);
-    vel = new PVector(0, 0);
-    basespeed = 20;
+    mass = 1;
     coeffsize = 50;
+    basespeed = 10;
+    maxforce = 0.5;
+    widthedge = width-coeffsize;
+    heightedge = height-coeffsize;
+
+    loc = new PVector(
+      random(coeffsize, widthedge), 
+      random(coeffsize, heightedge)
+      );
+    vel = new PVector(0, 0);
+    acc = new PVector(0, 0);
+    target = new PVector(
+      random(coeffsize, widthedge), 
+      random(coeffsize, heightedge)
+      );
+    dir = new PVector(0, 0);
+    st  = new PVector(0, 0);
+    finalspeed = basespeed*mass;
+
+    once_tb = false; // ONCE TB
+    once_nbb = false; // ONCE NBB
   }
 
-  public Creature corps(int c_) { //DISPLAY
+  public Creature corps(int c_) { //decide here global moves / speed pattern / body shape
     c = c_;
-    switch(c_) {
+    finalspeed = basespeed*mass;
+    float theta = vel.heading();
+
+    stroke(0, 0, 0);
+    noFill();
+    /*if(frameCount%60 == 0){
+     console.log(finalspeed); 
+     }*/
+
+    dir = PVector.sub(target, loc);
+
+
+    switch(c) {
     case 0:
-      if (vel.mag() < 0.1) {
-        PVector tmp = new PVector(random(-basespeed, basespeed), random(-basespeed, basespeed));
-        vel.add(tmp);
+      maxforce = 1;
+      float dd = dir.mag();
+      dir.normalize();
+      if (dd < coeffsize*2) {
+        float ralenti = map(dd, 0, coeffsize*2, 0, finalspeed);  
+        dir.mult(ralenti);
+      } else {
+        dir.mult(finalspeed);
       }
-      vel.mult(0.95);
-      loc.add(vel);
+
+      if (dd <= 0.25) {
+        target = new PVector(
+          random(coeffsize, widthedge), 
+          random(coeffsize, heightedge)
+          ); 
+        //ellipse(target.x, target.y, 100, 100);
+      }
+
       ellipse(loc.x, loc.y, coeffsize, coeffsize);
       break;
-    case 1:
+    case 1: //SERPENT
+      maxforce = 1;
+      if (frameCount%10 == 0) {
+        target = new PVector(
+          random(coeffsize, widthedge), 
+          random(coeffsize, heightedge)
+          );
+        //rect(target.x, target.y, 100, 100);
+      } 
+      dir.mult(finalspeed);
+
+      
+      rect(loc.x, loc.y, coeffsize/2, coeffsize/2);
+      
+      
 
       break;
     case 2:
 
-      break;
-    case 3:
 
       break;
+    case 3:
+      
+      float ddd = dir.mag();
+      dir.normalize();
+      if (ddd < coeffsize) {
+        target = new PVector(
+          random(coeffsize, widthedge), 
+          random(coeffsize, heightedge)
+          );
+        //rect(target.x, target.y, 100, 100);
+      } 
+      dir.mult(finalspeed);
+
+      
+      pushMatrix();
+      translate(loc.x, loc.y);
+      rotate(theta+PI/2);
+      
+      beginShape();
+      float tmp = coeffsize*0.15;
+      vertex(-tmp*3, -tmp*2.5);
+      vertex(tmp*3, -tmp*1.5);
+      vertex(tmp*2, tmp*5);
+      vertex(0, tmp*7.5);
+      
+      /*vertex(loc.x-tmp*3, loc.y-tmp*2.5);
+      vertex(loc.x+tmp*3, loc.y-tmp*1.5);
+      vertex(loc.x+tmp*2, loc.y+tmp*5);
+      vertex(loc.x, loc.y+tmp*7.5);*/
+      endShape(CLOSE);
+      popMatrix();
+      break;
     }
+
+    //TARGET FOR TEST PURPOSE
+    //stroke(0, 100, 100);
+    //point(target.x, target.y);
+
+    st = PVector.sub(dir, vel); 
+    st.limit(maxforce);
+
+    applyForce(st);
+    vel.add(acc);
+    vel.limit(finalspeed);
+    loc.add(vel);
+    acc.mult(0);
+
     rebondis();
+    return this;
+  }
+
+  // ARMSIZE and 
+  public Creature taillebras(int tb_) {
+    tb = float(tb_);
+
+    //armsize influence on coeffspeed / the larger arms = the more speed
+    if (!once_tb) { 
+      mass += tb/3;
+      once_tb = true;
+    }
+
+
+    return this;
+  }
+
+  public Creature nombrebras(int nbb_) {
+    nbb = float(nbb_);
+
+    //arm count influence on coeffspeed / the more arms = the less speed
+    if (!once_nbb) { 
+      mass -= nbb/3;
+      once_nbb = true;
+    }
+
     return this;
   }
 
@@ -104,29 +242,45 @@ class Creature {
   }
 
   public Creature rebondis() {
-    if ((this.loc.x < 0 &&  this.vel.x < 0) 
-      || (this.loc.x > width && this.vel.x > 0))
-      if ((this.loc.x < 20 &&  this.vel.x < 0)
-        || (this.loc.x > width - 20 && this.vel.x > 0)
-        )
-        this.vel.x *= -0.95;
-
-    if ((this.loc.y < 0 && this.vel.y < 0)
-      || (this.loc.y > height && this.vel.y > 0))
-      if ((this.loc.y < 20 && this.vel.y < 0)
-        || (this.loc.y > height - 20 && this.vel.y > 0)
-        )
-        this.vel.y *= -0.95;
+    PVector nogo;
+    PVector out = new PVector(0, 0);
+    //REPULSIVE WALLS
+    //stroke(0, 100, 100);
+    //rect(width/2, height/2, widthedge, heightedge);
+    if (((this.loc.x < coeffsize &&  this.vel.x < coeffsize)
+      || (this.loc.x > width + coeffsize && this.vel.x > 0))
+      || ((this.loc.y < -coeffsize && this.vel.y < 0)
+      || (this.loc.y > height + coeffsize && this.vel.y > 0))) {
+      if ((this.loc.x < coeffsize &&  this.vel.x < coeffsize)
+        || (this.loc.x > width + coeffsize && this.vel.x > 0)) {
+        out = new PVector(finalspeed, vel.y);
+      }
+      if ((this.loc.y < -coeffsize && this.vel.y < 0)
+        || (this.loc.y > height + coeffsize && this.vel.y > 0)
+        ) {
+        out = new PVector(vel.x, finalspeed);
+      }
+      nogo = PVector.sub(out, vel);
+      nogo.limit(maxforce*1.5);
+      applyForce(nogo);
+    }
 
     return this;
+  }
+
+  void applyForce(PVector force) {
+    PVector f = PVector.div(force, mass);
+    acc.add(f);
   }
 }
 
 
 Creature macreature;
+Creature macreature2;
+Creature macreature3;
 
 void setup() {
-  size(800, 800);
+  size(600, 600);
   stroke(0);
   strokeWeight(4);
 
@@ -136,19 +290,35 @@ void setup() {
 
   rectMode(CENTER);
   macreature = new Creature();
+  macreature2 = new Creature();
+  macreature3 = new Creature();
 }
 
 void draw() {
-  
+
   background(0, 0, 100, 0);
-  macreature.corps(atome);
- 
-  /*macreature
+  macreature
+    .corps(atome)
+  /*.taillebras(tentacule)
+   .nombrebras(poulpe)*/
+    ;
+
+  macreature2
+    .corps(cristal)
+  /*.taillebras(patte);*/
+    ;
+
+  macreature3
     .corps(serpent)
-    .main(losange)
-    .tailledebras(grand) // bosse / patte =  / antenne =  / tentacule = 
-    .nombredebras(humain) //humain = 2 / alien = 3 / insecte = 6 / poulpe = 8   
-    .couleurs(aquatique) //aquatique = bleus / exotique = rouge/orange / foret = vert / nocturne = violets / soleil = jaunes
-    .tete(horrible); // cyclope = 1 / humain = 2 / alien = 3 / horrible = 16 
- */
+  /*.taillebras(patte);*/
+    ;
+
+  /*macreature
+   .corps(serpent)
+   .main(losange)
+   .tailledebras(grand) // bosse / patte =  / antenne =  / tentacule = 
+   .nombredebras(humain) //humain = 2 / alien = 3 / insecte = 6 / poulpe = 8   
+   .couleurs(aquatique) //aquatique = bleus / exotique = rouge/orange / foret = vert / nocturne = violets / soleil = jaunes
+   .tete(horrible); // cyclope = 1 / humain = 2 / alien = 3 / horrible = 16 
+   */
 }
