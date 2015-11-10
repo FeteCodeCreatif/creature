@@ -1,4 +1,4 @@
-// Global Variables
+// Global Variables //<>//
 // BODY
 int atome = 0;
 int serpent = 1;
@@ -55,42 +55,68 @@ class Creature {
   int tt;
 
   //GLOBALS
-  float basespeed;
-  float finalspeed;
-  float mass;
-  float coeffsize;
-  float theta;
-  boolean once_tb;
-  boolean once_nbb;
-  float maxforce;
-  float widthedge;
-  float heightedge;
+  float basespeed; //Base speed
+  float finalspeed; // Final speed once multiplied by Creature's mass 
+  float mass; // Mass - influenced by arms count and length
+  float coeffsize; //Overall size of Creatures
+  float theta; // Heading angle vector
+  boolean once_tb; //add only once coefficient on mass based on tb (arm size) 
+  boolean once_nbb; //add only once coefficient on mass based on nbb (arms count)
+  float maxforce; //Max force when applying on main velocity to avoid weird moves
+  float widthedge; //Width edge to repell creatures
+  float heightedge; // Height edge to repell creatures
+
+  //SNAKE
+  int sizeSnake = 5;
+  Child[] snake = new Child[sizeSnake];
+  float segment;
+  Attach anc;
+
 
   //CREATURE CLASS STARTS HERE
   Creature() {
-    mass = 1;
+    //VARIABLES INIT
+    mass = 1; 
     coeffsize = 50;
     basespeed = 10;
     maxforce = 0.5;
+    // Init edges with coeffsize
     widthedge = width-coeffsize;
     heightedge = height-coeffsize;
 
+    //Random location starting point
     loc = new PVector(
       random(coeffsize, widthedge), 
       random(coeffsize, heightedge)
       );
+
+    //Velocity and acceleration initialization
     vel = new PVector(0, 0);
     acc = new PVector(0, 0);
+
+    //Random first target
     target = new PVector(
       random(coeffsize, widthedge), 
       random(coeffsize, heightedge)
       );
+
+    //Direction and steering initialization
     dir = new PVector(0, 0);
     st  = new PVector(0, 0);
+
+    //Finalspeed initialization - default one with mass = 1 
     finalspeed = basespeed*mass;
 
+    // Init once booleans
     once_tb = false; // ONCE TB
     once_nbb = false; // ONCE NBB
+
+    // SNAKE INIT 
+    segment = coeffsize*0.5;
+    for (int i = 0; i < sizeSnake; i++) {
+      snake[i] = new Child(loc.x+(i*2), loc.y+(i*2));
+    }
+    anc = new Attach(loc.x, loc.y, int(segment/10));
   }
 
   public Creature corps(int c_) { //decide here global moves / speed pattern / body shape
@@ -140,21 +166,62 @@ class Creature {
       } 
       dir.mult(finalspeed);
 
-      
-      rect(loc.x, loc.y, coeffsize/2, coeffsize/2);
-      
-      
+      beginShape();
+      curveVertex(loc.x, loc.y);
+      for (int j = 0; j < sizeSnake; j++) {
+
+        if (j == 0) {
+          anc = new Attach(loc.x, loc.y, int(segment));
+        } else {
+          anc = new Attach(snake[j-1].loc.x, snake[j-1].loc.y, int(segment));
+        }
+        anc.connect(snake[j]);
+        anc.constrainLength(snake[j], segment*0.99, segment*1.01, 0.8);
+        snake[j].applyForce(snake[j].acc);
+        snake[j].update();
+        curveVertex(snake[j].loc.x, snake[j].loc.y);
+      }
+      endShape();
 
       break;
     case 2:
+      maxforce = 1;
+      float du = dir.mag();
 
+      float r = coeffsize*2;
+      float amp = 10;
+      PVector oscillate = new PVector(r*cos(TWO_PI * (frameCount/amp)), r*sin(TWO_PI * (frameCount/amp)));
 
+      if (du < coeffsize*2) {
+        dir.normalize();
+        float ralenti = map(du, 0, coeffsize*2, 0, finalspeed);  
+        dir.mult(ralenti);
+      } else {
+        dir.add(oscillate);
+        dir.normalize();
+        dir.mult(finalspeed);
+      }
+
+      if (du <= coeffsize/2) {
+        target = new PVector(
+          random(coeffsize, widthedge), 
+          random(coeffsize, heightedge)
+          ); 
+        //ellipse(target.x, target.y, 100, 100);
+      }
+      pushMatrix();
+      translate(loc.x, loc.y);
+      rotate(theta);
+      line(-coeffsize/4, -coeffsize/2, -coeffsize/4, coeffsize/2);
+      line(coeffsize/4, -coeffsize/2, coeffsize/4, coeffsize/2);
+      popMatrix();
       break;
     case 3:
-      
+      strokeCap(ROUND);
+      maxforce = 0.4;
       float ddd = dir.mag();
       dir.normalize();
-      if (ddd < coeffsize) {
+      if (ddd < coeffsize*2) {
         target = new PVector(
           random(coeffsize, widthedge), 
           random(coeffsize, heightedge)
@@ -163,22 +230,18 @@ class Creature {
       } 
       dir.mult(finalspeed);
 
-      
+
       pushMatrix();
       translate(loc.x, loc.y);
       rotate(theta+PI/2);
-      
+
       beginShape();
       float tmp = coeffsize*0.15;
       vertex(-tmp*3, -tmp*2.5);
       vertex(tmp*3, -tmp*1.5);
       vertex(tmp*2, tmp*5);
       vertex(0, tmp*7.5);
-      
-      /*vertex(loc.x-tmp*3, loc.y-tmp*2.5);
-      vertex(loc.x+tmp*3, loc.y-tmp*1.5);
-      vertex(loc.x+tmp*2, loc.y+tmp*5);
-      vertex(loc.x, loc.y+tmp*7.5);*/
+
       endShape(CLOSE);
       popMatrix();
       break;
@@ -227,21 +290,6 @@ class Creature {
     return this;
   }
 
-  void passe() {
-
-    if (loc.x > width) {
-      loc.x = 0;
-    } else if (loc.x < 0) {
-      loc.x = width;
-    }
-
-    if (loc.y > height) {
-      loc.y = 0;
-    } else if (loc.y < 0) {
-      loc.y = height;
-    }
-  }
-
   public Creature rebondis() {
     PVector nogo;
     PVector out = new PVector(0, 0);
@@ -261,8 +309,9 @@ class Creature {
         ) {
         out = new PVector(vel.x, finalspeed);
       }
+      maxforce = 1;
       nogo = PVector.sub(out, vel);
-      nogo.limit(maxforce*1.5);
+      nogo.limit(maxforce*2);
       applyForce(nogo);
     }
 
@@ -275,10 +324,85 @@ class Creature {
   }
 }
 
+// THANKS Daniel Shiffman for his Spring class - https://github.com/shiffman/The-Nature-of-Code-Examples/blob/master/chp03_oscillation/NOC_3_11_spring/Spring.pde
+class Attach {
+  PVector anchor; 
+  PVector ext; // extremity
+
+  float len; // Length
+  float k = 0.5; // Spring constant
+
+  Attach(float x, float y, int l) {
+    anchor = new PVector(x, y);
+    len = l;
+  }
+
+  void connect(Child c) {
+    PVector force = PVector.sub(c.loc, anchor);
+    float d = force.mag();
+    float stretch = d - len;
+
+    // Calculate force according to Hooke's Law
+    // F = k * stretch
+    force.normalize();
+    force.mult(-1 * k * stretch);
+    c.applyForce(force);
+  }
+
+  // Constrain the distance between bob and anchor between min and max
+  void constrainLength(Child c, float minlen, float maxlen, float inert) {
+    PVector dir = PVector.sub(c.loc, anchor);
+    float d = dir.mag();
+    // Is it too short?
+    if (d < minlen) {
+      dir.normalize();
+      dir.mult(minlen);
+      // Reset location and stop from moving (not realistic physics)
+      c.loc = PVector.add(anchor, dir);
+      c.vel.mult(inert);
+      // Is it too long?
+    } else if (d > maxlen) {
+      dir.normalize();
+      dir.mult(maxlen+(d-maxlen)/2);
+      // Reset location and stop from moving (not realistic physics)
+      c.loc = PVector.add(anchor, dir);
+      c.vel.mult(inert);
+    }
+  }
+}
+
+class Child {
+  PVector loc;
+  PVector vel;
+  PVector acc;
+  float mass = 10;
+  float fri = 0.99;
+
+  Child(float x, float y) {
+    loc = new PVector(x, y);
+    vel = new PVector();
+    acc = new PVector();
+  }
+
+  // Standard Euler integration
+  void update() { 
+    vel.add(acc);
+    vel.mult(fri);
+    loc.add(vel);
+    acc.mult(0);
+  }
+
+  void applyForce(PVector force) {
+    PVector f = force.get();
+    f.div(mass);
+    acc.add(f);
+  }
+}
 
 Creature macreature;
 Creature macreature2;
 Creature macreature3;
+Creature macreature4;
 
 void setup() {
   size(600, 600);
@@ -293,6 +417,7 @@ void setup() {
   macreature = new Creature();
   macreature2 = new Creature();
   macreature3 = new Creature();
+  macreature4 = new Creature();
 }
 
 void draw() {
@@ -311,6 +436,11 @@ void draw() {
 
   macreature3
     .corps(serpent)
+  /*.taillebras(patte);*/
+    ;
+
+  macreature4
+    .corps(duo)
   /*.taillebras(patte);*/
     ;
 
