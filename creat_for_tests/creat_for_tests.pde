@@ -80,17 +80,19 @@ class Creature {
     if(width > height){
       strokeW = height/180;
       coeffsize = height/15;
+      basespeed = height/100;
     }
     else {
       strokeW = width/180;
       coeffsize = width/15;
+      basespeed = width/100;
     }
     strokeWeight(strokeW);
 
     
     mass = 1; 
     
-    basespeed = width/100;
+    
     maxforce = 0.5;
     // Init edges with coeffsize
     widthedge = width-coeffsize;
