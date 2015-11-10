@@ -65,6 +65,7 @@ class Creature {
   float maxforce; //Max force when applying on main velocity to avoid weird moves
   float widthedge; //Width edge to repell creatures
   float heightedge; // Height edge to repell creatures
+  float strokeW; //strokeWeight based on display size
 
   //SNAKE
   int sizeSnake = 5;
@@ -76,9 +77,20 @@ class Creature {
   //CREATURE CLASS STARTS HERE
   Creature() {
     //VARIABLES INIT
+    if(width > height){
+      strokeW = height/180;
+      coeffsize = height/15;
+    }
+    else {
+      strokeW = width/180;
+      coeffsize = width/15;
+    }
+    strokeWeight(strokeW);
+
+    
     mass = 1; 
-    coeffsize = 50;
-    basespeed = 10;
+    
+    basespeed = width/100;
     maxforce = 0.5;
     // Init edges with coeffsize
     widthedge = width-coeffsize;
@@ -134,7 +146,7 @@ class Creature {
 
 
     switch(c) {
-    case 0:
+    case 0: //ATOME
       maxforce = 1;
       float dd = dir.mag();
       dir.normalize();
@@ -145,7 +157,7 @@ class Creature {
         dir.mult(finalspeed);
       }
 
-      if (dd <= 0.25) {
+      if (dd <= coeffsize/10) {
         target = new PVector(
           random(coeffsize, widthedge), 
           random(coeffsize, heightedge)
@@ -157,13 +169,20 @@ class Creature {
       break;
     case 1: //SERPENT
       maxforce = 1;
-      if (frameCount%10 == 0) {
+      
+      float rr = coeffsize*2;
+      float ampl = 20;
+      PVector oscillates = new PVector(rr*cos(TWO_PI * (frameCount/ampl)), rr*sin(TWO_PI * (frameCount/ampl)));
+      
+      if (frameCount%60 == 0) {
         target = new PVector(
           random(coeffsize, widthedge), 
           random(coeffsize, heightedge)
           );
         //rect(target.x, target.y, 100, 100);
       } 
+      dir.add(oscillates);
+      dir.normalize();
       dir.mult(finalspeed);
 
       beginShape();
@@ -176,7 +195,7 @@ class Creature {
           anc = new Attach(snake[j-1].loc.x, snake[j-1].loc.y, int(segment));
         }
         anc.connect(snake[j]);
-        anc.constrainLength(snake[j], segment*0.99, segment*1.01, 0.8);
+        anc.constrainLength(snake[j], segment*0.99, segment*1.01, 0.95);
         snake[j].applyForce(snake[j].acc);
         snake[j].update();
         curveVertex(snake[j].loc.x, snake[j].loc.y);
@@ -184,7 +203,7 @@ class Creature {
       endShape();
 
       break;
-    case 2:
+    case 2: //DUO
       maxforce = 1;
       float du = dir.mag();
 
@@ -216,7 +235,7 @@ class Creature {
       line(coeffsize/4, -coeffsize/2, coeffsize/4, coeffsize/2);
       popMatrix();
       break;
-    case 3:
+    case 3: //CRISTAL
       strokeCap(ROUND);
       maxforce = 0.4;
       float ddd = dir.mag();
@@ -405,7 +424,7 @@ Creature macreature3;
 Creature macreature4;
 
 void setup() {
-  size(600, 600);
+  size(document.body.clientWidth, document.body.clientHeight);
   stroke(0);
   strokeWeight(4);
 
