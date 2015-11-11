@@ -30,6 +30,7 @@ color exotique = color(12, 100, 100);
 color foret = color(92, 100, 75);
 color nuit = color(300, 100, 75);
 color soleil = color(50, 100, 100);
+color gris = color(127);
 
 //TETE
 int cyclope = 1;
@@ -47,12 +48,12 @@ class Creature {
   PVector st; // Steering
 
   //PARAMETERS
-  int c;
-  int m;
-  float tb;
-  float nbb;
-  color co;
-  int tt;
+  int c; // body
+  int m; // hand
+  float tb; // Arm size
+  int nbb; // Arms count
+  color co; // Colors
+  int tt; // Tete
 
   //GLOBALS
   float basespeed; //Base speed
@@ -68,31 +69,49 @@ class Creature {
   float strokeW; //strokeWeight based on display size
 
   //SNAKE
-  int sizeSnake = 5;
+  int sizeSnake;
   Child[] snake = new Child[sizeSnake];
   float segment;
   Attach anc;
 
+  //ARMS
+  Child[] arms;
+  Attach epaule;
 
   //CREATURE CLASS STARTS HERE
   Creature() {
+    nbb = humain;
+    tb = patte;
+    co = gris;
+    m = cercle;
+    tt = cyclope;
+    sizeSnake = int((4+nbb)/2);
+    
+    //DEFAULTS
+    taillebras(tb);
+    nombredebras(nbb);
+    couleurs(co);
+    main(m);
+    tete(tt);
+
+    
+
     //VARIABLES INIT
-    if(width > height){
+    if (width > height) {
       strokeW = height/180;
       coeffsize = height/15;
       basespeed = height/100;
-    }
-    else {
+    } else {
       strokeW = width/180;
       coeffsize = width/15;
       basespeed = width/100;
     }
     strokeWeight(strokeW);
 
-    
+  
     mass = 1; 
-    
-    
+
+
     maxforce = 0.5;
     // Init edges with coeffsize
     widthedge = width-coeffsize;
@@ -126,7 +145,7 @@ class Creature {
     once_nbb = false; // ONCE NBB
 
     // SNAKE INIT 
-    segment = coeffsize*0.5;
+    segment = (coeffsize*2)/sizeSnake;
     for (int i = 0; i < sizeSnake; i++) {
       snake[i] = new Child(loc.x+(i*2), loc.y+(i*2));
     }
@@ -171,11 +190,11 @@ class Creature {
       break;
     case 1: //SERPENT
       maxforce = 1;
-      
+
       float rr = coeffsize*2;
       float ampl = 20;
       PVector oscillates = new PVector(rr*cos(TWO_PI * (frameCount/ampl)), rr*sin(TWO_PI * (frameCount/ampl)));
-      
+
       if (frameCount%60 == 0) {
         target = new PVector(
           random(coeffsize, widthedge), 
@@ -189,6 +208,7 @@ class Creature {
 
       beginShape();
       curveVertex(loc.x, loc.y);
+      curveVertex(loc.x, loc.y);
       for (int j = 0; j < sizeSnake; j++) {
 
         if (j == 0) {
@@ -197,12 +217,15 @@ class Creature {
           anc = new Attach(snake[j-1].loc.x, snake[j-1].loc.y, int(segment));
         }
         anc.connect(snake[j]);
-        anc.constrainLength(snake[j], segment*0.99, segment*1.01, 0.95);
+        anc.constrainLength(snake[j], segment*0.9999, segment*1.0001, 0.95);
         snake[j].applyForce(snake[j].acc);
         snake[j].update();
+
         curveVertex(snake[j].loc.x, snake[j].loc.y);
       }
       endShape();
+      
+      point(loc.x, loc.y);
 
       break;
     case 2: //DUO
@@ -285,9 +308,9 @@ class Creature {
     return this;
   }
 
-  // ARMSIZE and 
-  public Creature taillebras(int tb_) {
-    tb = float(tb_);
+  // ARMSIZE
+  public Creature taillebras(float tb_) {
+    tb = tb_;
 
     //armsize influence on coeffspeed / the larger arms = the more speed
     if (!once_tb) { 
@@ -296,17 +319,39 @@ class Creature {
     }
 
 
+
     return this;
   }
 
-  public Creature nombrebras(int nbb_) {
-    nbb = float(nbb_);
+  //ARMS COUNT
+  public Creature nombredebras(int nbb_) {
+    nbb = nbb_;
 
     //arm count influence on coeffspeed / the more arms = the less speed
     if (!once_nbb) { 
       mass -= nbb/3;
       once_nbb = true;
+      arms = new Child[int(nbb)];
     }
+
+    return this;
+  }
+
+  public Creature main(int m_) {
+    m = m_;
+
+
+    return this;
+  }
+
+  public Creature couleurs(color co_) {
+    co = co_;
+
+    return this;
+  }
+
+  public Creature tete(int te_) {
+    tt = te_;
 
     return this;
   }
