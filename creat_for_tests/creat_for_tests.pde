@@ -61,22 +61,27 @@ class Creature {
   float mass; // Mass - influenced by arms count and length
   float coeffsize; //Overall size of Creatures
   float theta; // Heading angle vector
-  boolean once_tb; //add only once coefficient on mass based on tb (arm size) 
-  boolean once_nbb; //add only once coefficient on mass based on nbb (arms count)
   float maxforce; //Max force when applying on main velocity to avoid weird moves
   float widthedge; //Width edge to repell creatures
   float heightedge; // Height edge to repell creatures
   float strokeW; //strokeWeight based on display size
+  float loop;
+
+  //INIT BOOLEANS
+  boolean once_c; //init for body function to updates from user choices
+  boolean once_tb; //add only once coefficient on mass based on tb (arm size) 
+  boolean once_nbb; //add only once coefficient on mass based on nbb (arms count)
 
   //SNAKE
   int sizeSnake;
-  Child[] snake = new Child[sizeSnake];
+  Child[] snake;
   float segment;
   Attach anc;
 
   //ARMS
   Child[] arms;
-  Attach epaule;
+  Attach att;
+  PVector[] epaule;
 
   //CREATURE CLASS STARTS HERE
   Creature() {
@@ -85,16 +90,8 @@ class Creature {
     co = gris;
     m = cercle;
     tt = cyclope;
-    sizeSnake = int((4+nbb)/2);
-    
-    //DEFAULTS
-    taillebras(tb);
-    nombredebras(nbb);
-    couleurs(co);
-    main(m);
-    tete(tt);
 
-    
+    loop = 0;
 
     //VARIABLES INIT
     if (width > height) {
@@ -108,11 +105,10 @@ class Creature {
     }
     strokeWeight(strokeW);
 
-  
+    //INIT MASS AND FORCE MAX
     mass = 1; 
-
-
     maxforce = 0.5;
+
     // Init edges with coeffsize
     widthedge = width-coeffsize;
     heightedge = height-coeffsize;
@@ -137,203 +133,222 @@ class Creature {
     dir = new PVector(0, 0);
     st  = new PVector(0, 0);
 
-    //Finalspeed initialization - default one with mass = 1 
-    finalspeed = basespeed*mass;
+    // INIT ONCE BOOLEANS
+    once_tb = false; // ONCE ARMS SIZE
+    once_nbb = false; // ONCE ARMS COUNT
+    once_c = false; // ONCE BODY
+  }
 
-    // Init once booleans
-    once_tb = false; // ONCE TB
-    once_nbb = false; // ONCE NBB
+  //LET'S MAKE SURE THAT WE READ THE CODE OF THE USER BEFORE TRYING TO RENDER ANYTHING (To avoid arrays out of bounds for example)
+  boolean updated() { 
+    if (loop <= 1) {
+      //armsize influence on coeffspeed / the larger arms = the more speed
+      mass += tb/20;
+      //arm count influence on coeffspeed / the more arms = the less speed
+      mass -= float(nbb/20);
 
-    // SNAKE INIT 
-    segment = (coeffsize*2)/sizeSnake;
-    for (int i = 0; i < sizeSnake; i++) {
-      snake[i] = new Child(loc.x+(i*2), loc.y+(i*2));
+      //Finalspeed initialization - default one with mass = 1 
+      finalspeed = basespeed*mass;
+
+      //SNAKE UPDATE
+      sizeSnake = int((3+nbb)/2);
+      snake = new Child[sizeSnake];
+      segment = (coeffsize*2)/sizeSnake;
+      for (int i = 0; i < sizeSnake; i++) {
+        snake[i] = new Child(loc.x+(i*2), loc.y+(i*2));
+      }
+      anc = new Attach(loc.x, loc.y, int(segment/10));
+
+      //ATTACH FOR ARMS
+      epaule = new PVector[nbb];
+      for (int i = 0; i < nbb; i++) {
+        epaule[i] = new PVector(loc.x+(i*2), loc.y+(i*2));
+      }
+      loop++;
+      return false;
+    } else { 
+      return true;
     }
-    anc = new Attach(loc.x, loc.y, int(segment/10));
   }
 
   public Creature corps(int c_) { //decide here global moves / speed pattern / body shape
     c = c_;
     finalspeed = basespeed*mass;
-    float theta = vel.heading();
+    if (updated()) {
+      float theta = vel.heading();
+      stroke(0, 0, 0);
+      noFill();
+      /*if(frameCount%60 == 0){
+       console.log(finalspeed); 
+       }*/
 
-    stroke(0, 0, 0);
-    noFill();
-    /*if(frameCount%60 == 0){
-     console.log(finalspeed); 
-     }*/
-
-    dir = PVector.sub(target, loc);
-
-
-    switch(c) {
-    case 0: //ATOME
-      maxforce = 1;
-      float dd = dir.mag();
-      dir.normalize();
-      if (dd < coeffsize*2) {
-        float ralenti = map(dd, 0, coeffsize*2, 0, finalspeed);  
-        dir.mult(ralenti);
-      } else {
-        dir.mult(finalspeed);
-      }
-
-      if (dd <= coeffsize/10) {
-        target = new PVector(
-          random(coeffsize, widthedge), 
-          random(coeffsize, heightedge)
-          ); 
-        //ellipse(target.x, target.y, 100, 100);
-      }
-
-      ellipse(loc.x, loc.y, coeffsize, coeffsize);
-      break;
-    case 1: //SERPENT
-      maxforce = 1;
-
-      float rr = coeffsize*2;
-      float ampl = 20;
-      PVector oscillates = new PVector(rr*cos(TWO_PI * (frameCount/ampl)), rr*sin(TWO_PI * (frameCount/ampl)));
-
-      if (frameCount%60 == 0) {
-        target = new PVector(
-          random(coeffsize, widthedge), 
-          random(coeffsize, heightedge)
-          );
-        //rect(target.x, target.y, 100, 100);
-      } 
-      dir.add(oscillates);
-      dir.normalize();
-      dir.mult(finalspeed);
-
-      beginShape();
-      curveVertex(loc.x, loc.y);
-      curveVertex(loc.x, loc.y);
-      for (int j = 0; j < sizeSnake; j++) {
-
-        if (j == 0) {
-          anc = new Attach(loc.x, loc.y, int(segment));
+      dir = PVector.sub(target, loc);
+      switch(c) {
+      case 0: //ATOME
+        maxforce = 1;
+        float dd = dir.mag();
+        dir.normalize();
+        if (dd < coeffsize*2) {
+          float ralenti = map(dd, 0, coeffsize*2, 0, finalspeed);  
+          dir.mult(ralenti);
         } else {
-          anc = new Attach(snake[j-1].loc.x, snake[j-1].loc.y, int(segment));
+          dir.mult(finalspeed);
         }
-        anc.connect(snake[j]);
-        anc.constrainLength(snake[j], segment*0.9999, segment*1.0001, 0.95);
-        snake[j].applyForce(snake[j].acc);
-        snake[j].update();
 
-        curveVertex(snake[j].loc.x, snake[j].loc.y);
-      }
-      endShape();
-      
-      point(loc.x, loc.y);
+        if (dd <= coeffsize/10) {
+          target = new PVector(
+            random(coeffsize, widthedge), 
+            random(coeffsize, heightedge)
+            ); 
+          //ellipse(target.x, target.y, 100, 100);
+        }
 
-      break;
-    case 2: //DUO
-      maxforce = 1;
-      float du = dir.mag();
+        ellipse(loc.x, loc.y, coeffsize, coeffsize);
+        break;
+      case 1: //SERPENT
+        maxforce = 1;
 
-      float r = coeffsize*2;
-      float amp = 10;
-      PVector oscillate = new PVector(r*cos(TWO_PI * (frameCount/amp)), r*sin(TWO_PI * (frameCount/amp)));
+        float rr = coeffsize*2;
+        float ampl = 20;
+        PVector oscillates = new PVector(rr*cos(TWO_PI * (frameCount/ampl)), rr*sin(TWO_PI * (frameCount/ampl)));
 
-      if (du < coeffsize*2) {
-        dir.normalize();
-        float ralenti = map(du, 0, coeffsize*2, 0, finalspeed);  
-        dir.mult(ralenti);
-      } else {
-        dir.add(oscillate);
+        if (frameCount%30 == 0) {
+          target = new PVector(
+            random(coeffsize, widthedge), 
+            random(coeffsize, heightedge)
+            );
+          //rect(target.x, target.y, 100, 100);
+        } 
+        dir.add(oscillates);
         dir.normalize();
         dir.mult(finalspeed);
+
+        beginShape();
+        curveVertex(loc.x, loc.y);
+        curveVertex(loc.x, loc.y);
+        for (int j = 0; j < sizeSnake; j++) {
+
+          if (j == 0) {
+            anc = new Attach(loc.x, loc.y, int(segment/1.1));
+          } else {
+            anc = new Attach(snake[j-1].loc.x, snake[j-1].loc.y, int(segment/1.1));
+          }
+          anc.connect(snake[j]);
+          anc.constrainLength(snake[j], segment/2, segment*1.0001, 0.95);
+          snake[j].applyForce(snake[j].acc);
+          snake[j].update();
+
+          curveVertex(snake[j].loc.x, snake[j].loc.y);
+          //ellipse(snake[j].loc.x, snake[j].loc.y, 15, 15);
+          epaule[j] = new PVector(snake[j].loc.x, snake[j].loc.y);
+          epaule[j*2+1] = new PVector(snake[j].loc.x, snake[j].loc.y);
+        }
+        curveVertex(snake[sizeSnake-1].loc.x, snake[sizeSnake-1].loc.y);
+        endShape();
+
+        break;
+      case 2: //DUO
+        maxforce = 1;
+        float du = dir.mag();
+
+        float r = coeffsize*2;
+        float amp = 10;
+        PVector oscillate = new PVector(r*cos(TWO_PI * (frameCount/amp)), r*sin(TWO_PI * (frameCount/amp)));
+
+        if (du < coeffsize*2) {
+          dir.normalize();
+          float ralenti = map(du, 0, coeffsize*2, 0, finalspeed);  
+          dir.mult(ralenti);
+        } else {
+          dir.add(oscillate);
+          dir.normalize();
+          dir.mult(finalspeed);
+        }
+
+        if (du <= coeffsize/2) {
+          target = new PVector(
+            random(coeffsize, widthedge), 
+            random(coeffsize, heightedge)
+            ); 
+          //ellipse(target.x, target.y, 100, 100);
+        }
+        pushMatrix();
+        translate(loc.x, loc.y);
+        rotate(theta);
+        line(-coeffsize/4, -coeffsize/2, -coeffsize/4, coeffsize/2);
+        line(coeffsize/4, -coeffsize/2, coeffsize/4, coeffsize/2);
+        popMatrix();
+        break;
+      case 3: //CRISTAL
+        strokeCap(ROUND);
+        maxforce = 0.4;
+        float ddd = dir.mag();
+        dir.normalize();
+        if (ddd < coeffsize*2) {
+          target = new PVector(
+            random(coeffsize, widthedge), 
+            random(coeffsize, heightedge)
+            );
+          //rect(target.x, target.y, 100, 100);
+        } 
+        dir.mult(finalspeed);
+
+
+        pushMatrix();
+        translate(loc.x, loc.y);
+        rotate(theta+PI/2);
+
+        beginShape();
+        float tmp = coeffsize*0.15;
+        vertex(-tmp*3, -tmp*2.5);
+        vertex(tmp*3, -tmp*1.5);
+        vertex(tmp*2, tmp*5);
+        vertex(0, tmp*7.5);
+
+        endShape(CLOSE);
+        popMatrix();
+        break;
       }
 
-      if (du <= coeffsize/2) {
-        target = new PVector(
-          random(coeffsize, widthedge), 
-          random(coeffsize, heightedge)
-          ); 
-        //ellipse(target.x, target.y, 100, 100);
-      }
-      pushMatrix();
-      translate(loc.x, loc.y);
-      rotate(theta);
-      line(-coeffsize/4, -coeffsize/2, -coeffsize/4, coeffsize/2);
-      line(coeffsize/4, -coeffsize/2, coeffsize/4, coeffsize/2);
-      popMatrix();
-      break;
-    case 3: //CRISTAL
-      strokeCap(ROUND);
-      maxforce = 0.4;
-      float ddd = dir.mag();
-      dir.normalize();
-      if (ddd < coeffsize*2) {
-        target = new PVector(
-          random(coeffsize, widthedge), 
-          random(coeffsize, heightedge)
-          );
-        //rect(target.x, target.y, 100, 100);
-      } 
-      dir.mult(finalspeed);
+      //TARGET FOR TEST PURPOSE
+      //stroke(0, 100, 100);
+      //point(target.x, target.y);
 
+      st = PVector.sub(dir, vel); 
+      st.limit(maxforce);
 
-      pushMatrix();
-      translate(loc.x, loc.y);
-      rotate(theta+PI/2);
+      applyForce(st);
+      vel.add(acc);
+      vel.limit(finalspeed);
+      loc.add(vel);
+      acc.mult(0);
 
-      beginShape();
-      float tmp = coeffsize*0.15;
-      vertex(-tmp*3, -tmp*2.5);
-      vertex(tmp*3, -tmp*1.5);
-      vertex(tmp*2, tmp*5);
-      vertex(0, tmp*7.5);
-
-      endShape(CLOSE);
-      popMatrix();
-      break;
+      rebondis();
     }
-
-    //TARGET FOR TEST PURPOSE
-    //stroke(0, 100, 100);
-    //point(target.x, target.y);
-
-    st = PVector.sub(dir, vel); 
-    st.limit(maxforce);
-
-    applyForce(st);
-    vel.add(acc);
-    vel.limit(finalspeed);
-    loc.add(vel);
-    acc.mult(0);
-
-    rebondis();
     return this;
   }
 
   // ARMSIZE
   public Creature taillebras(float tb_) {
     tb = tb_;
-
-    //armsize influence on coeffspeed / the larger arms = the more speed
-    if (!once_tb) { 
-      mass += tb/3;
-      once_tb = true;
+    if (updated()) {
     }
-
-
-
     return this;
   }
 
   //ARMS COUNT
   public Creature nombredebras(int nbb_) {
     nbb = nbb_;
+    if (updated()) {
+      for (int ii = 0; ii < nbb; ii++) {
 
-    //arm count influence on coeffspeed / the more arms = the less speed
-    if (!once_nbb) { 
-      mass -= nbb/3;
-      once_nbb = true;
-      arms = new Child[int(nbb)];
-    }
-
+        if (ii%2 == 0) {
+          ellipse(epaule[ii].x, epaule[ii].y, 15, 35);
+        } else {
+          ellipse(epaule[ii].x, epaule[ii].y, 35, 15);
+        }
+      }
+    }  
     return this;
   }
 
@@ -466,12 +481,12 @@ class Child {
 }
 
 Creature macreature;
-Creature macreature2;
-Creature macreature3;
-Creature macreature4;
+/*Creature macreature2;
+ Creature macreature3;
+ Creature macreature4;*/
 
 void setup() {
-  size(document.body.clientWidth, document.body.clientHeight);
+  size(800, 600);
   stroke(0);
   strokeWeight(4);
 
@@ -479,37 +494,39 @@ void setup() {
 
   colorMode(HSB, 360, 100, 100, 100);
 
+  ellipseMode(CENTER);
   rectMode(CENTER);
   macreature = new Creature();
-  macreature2 = new Creature();
-  macreature3 = new Creature();
-  macreature4 = new Creature();
+  /*macreature2 = new Creature();
+   macreature3 = new Creature();
+   macreature4 = new Creature();*/
 }
 
 void draw() {
 
   background(0, 0, 100, 0);
   macreature
-    .corps(atome)
-  /*.taillebras(tentacule)
-   .nombrebras(poulpe)*/
-    ;
-
-  macreature2
-    .corps(cristal)
-  /*.taillebras(patte);*/
-    ;
-
-  macreature3
     .corps(serpent)
-  /*.taillebras(patte);*/
+    .nombredebras(insecte)
+  /*.taillebras(tentacule)*/
     ;
 
-  macreature4
-    .corps(duo)
+  /*macreature2
+   .corps(cristal)
   /*.taillebras(patte);*/
-    ;
+  ;
 
+  /*macreature3
+   .corps(serpent)
+   .nombredebras(alien)
+   .taillebras(humain);
+   ;
+   
+   macreature4
+   .corps(serpent)
+   .nombredebras(poulpe)
+   .taillebras(bosse);
+   ;
   /*macreature
    .corps(serpent)
    .main(losange)
