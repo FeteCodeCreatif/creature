@@ -9,7 +9,7 @@ int crystal = 3;
 // HAND 
 int losange = 0;
 int cercle = 1;
-int triangle = 2;
+int pyramide = 2;
 int etoile = 3;
 
 //ARM SIZE
@@ -175,7 +175,7 @@ class Creature {
       arms = new Child[nbb];
       for (int i = 0; i < nbb; i++) {
         epaule[i] = new PVector(0, 0);
-        arms[i] = new Child(0, 0);
+        arms[i] = new Child(width, height);
       }
       loop++;
       return false;
@@ -186,7 +186,7 @@ class Creature {
 
   public Creature corps(int c_) { //decide here global moves / speed pattern / body shape
     if (frameCount%360 == 0) {
-      console.log(frameRate);
+      //console.log(frameRate);
     }
 
     c = c_;
@@ -217,30 +217,29 @@ class Creature {
             ); 
           //ellipse(target.x, target.y, 100, 100);
         }
-        
+
         ellipse(loc.x, loc.y, coeffsize, coeffsize);
-        
-        float angle=TWO_PI/(float)nbb;
-        for(int iii=0;iii<nbb;iii++)
+
+        float angle=TWO_PI/nbb;
+        for (int iii=0; iii<nbb; iii++)
         {
           epaule[iii] = new PVector(coeffsize/2*sin(angle*iii)+loc.x, coeffsize/2*cos(angle*iii)+loc.y);
-          vtmp = new PVector(0, 0);
-          vtmp = arms[iii].loca.get();
-          float thetaa = (-angle*iii)+PI/3;
+          vtmp = new PVector(1, 1);
+          float thetaa = (-angle*iii)+PI/4;
           vtmp.rotate(thetaa);
           vtmp.normalize();
-          vtmp.mult(1);
+          vtmp.mult(1.1);
           arms[iii].acce.add(vtmp);
         } 
 
-        
+
         break;
 
       case 1: //SERPENT
         maxforce = 0.1;
         float dddd = dir.mag();
         dir.normalize();
-        if (dddd < coeffsize*4) {
+        if (dddd < coeffsize*6) {
           target = new PVector(
             random(0, width), 
             random(0, height)
@@ -260,7 +259,7 @@ class Creature {
             anc = new Attach(snake[j-1].loca.x, snake[j-1].loca.y, int(segment));
           }
           anc.connect(snake[j]);
-          anc.constrainLength(snake[j], segment*1.01, segment*1.02, 0.65);
+          anc.constrainLength(snake[j], segment*1.01, segment*1.02, 0.69);
           snake[j].applyForce(snake[j].acce);
           snake[j].update();
 
@@ -277,7 +276,7 @@ class Creature {
           }
           vtmp.normalize();
           vtmp.mult(1);
-          if(j < sizeSnake-1){
+          if (j < sizeSnake-1) {
             arms[j].acce.add(vtmp);
           }
         }
@@ -286,18 +285,19 @@ class Creature {
         break;
 
       case 2: //DUO
-        maxforce = 1;
+        maxforce = 0.15;
         float du = dir.mag();
 
-        float r = coeffsize*2;
-        float amp = 10;
-        PVector oscillate = new PVector(r*cos(TWO_PI * (frameCount/amp)), r*sin(TWO_PI * (frameCount/amp)));
+        float r = 40;
+        float amp = 12;
+        PVector oscillate = new PVector(r*cos(TWO_PI * frameCount/amp), r*sin(TWO_PI * frameCount/amp));
 
         if (du < coeffsize*2) {
           dir.normalize();
           float ralenti = map(du, 0, coeffsize*2, 0, finalspeed);  
           dir.mult(ralenti);
         } else {
+          //console.log(dir);
           dir.add(oscillate);
           dir.normalize();
           dir.mult(finalspeed);
@@ -310,17 +310,19 @@ class Creature {
             ); 
           //ellipse(target.x, target.y, 100, 100);
         }
+
+
         pushMatrix();
         translate(loc.x, loc.y);
         rotate(theta);
         line(-coeffsize/4, -coeffsize/2, -coeffsize/4, coeffsize/2);
         line(coeffsize/4, -coeffsize/2, coeffsize/4, coeffsize/2);
         popMatrix();
-        break;
 
+        break;
       case 3: //CRISTAL
         strokeCap(ROUND);
-        maxforce = 0.4;
+        maxforce = 0.3;
         float ddd = dir.mag();
         dir.normalize();
         if (ddd < coeffsize*2) {
@@ -333,19 +335,31 @@ class Creature {
         dir.mult(finalspeed);
 
 
-        pushMatrix();
-        translate(loc.x, loc.y);
-        rotate(theta+PI/2);
-
+        float thetac = -theta;
+        float rad = coeffsize*0.8;
         beginShape();
-        float tmp = coeffsize*0.15;
-        vertex(-tmp*3, -tmp*2.5);
-        vertex(tmp*3, -tmp*1.5);
-        vertex(tmp*2, tmp*5);
-        vertex(0, tmp*7.5);
-
+        vertex(rad*sin(thetac+TWO_PI/3)+loc.x, rad*cos(thetac+TWO_PI/3)+loc.y);
+        vertex(rad*sin(thetac+PI/4)+loc.x, rad*cos(thetac+PI/4)+loc.y);
+        vertex((0.75*rad)*sin(thetac+(10*PI)/6)+loc.x, (0.75*rad)*cos(thetac+(10*PI)/6)+loc.y);
+        vertex(rad*sin(thetac+(3*PI)/2)+loc.x, rad*cos(thetac+(3*PI)/2)+loc.y);
         endShape(CLOSE);
+
+        for (int jj=0; jj<nbb; jj++)
+        {
+          float xl = lerp(rad*sin(thetac+TWO_PI/3)+loc.x, rad*sin(thetac+(3*PI)/2)+loc.x, (1/(nbb+1))*(jj+1));
+          float yl = lerp(rad*cos(thetac+TWO_PI/3)+loc.y, rad*cos(thetac+(3*PI)/2)+loc.y, (1/(nbb+1))*(jj+1));
+          epaule[jj] = new PVector(xl, yl);
+          vtmp = new PVector(0, 0);
+          vtmp = arms[jj].loca.get();
+          float thetaa = -thetac-PI/2;
+          vtmp.rotate(thetaa);
+          vtmp.normalize();
+          vtmp.mult(1);
+          arms[jj].acce.add(vtmp);
+        }
+
         popMatrix();
+
         break;
       }
 
@@ -386,7 +400,6 @@ class Creature {
         arms[ii].update();
         strokeWeight(strokeW/2);
         line(epaule[ii].x, epaule[ii].y, arms[ii].loca.x, arms[ii].loca.y);
-        ellipse(arms[ii].loca.x, arms[ii].loca.y, 10, 10);
       }
     }  
     return this;
@@ -394,8 +407,39 @@ class Creature {
 
   public Creature main(int m_) {
     m = m_;
-
-
+    float handsize = coeffsize/5; 
+    if (updated()) {
+      for (int ii = 0; ii < nbb; ii++) {
+        switch(m) {
+        case 0:
+          pushMatrix();
+          translate(arms[ii].loca.x, arms[ii].loca.y);
+          rotate(PI/4);
+          rect(0, 0, handsize, handsize);
+          popMatrix();
+          break;
+        case 1:
+          ellipse(arms[ii].loca.x, arms[ii].loca.y, handsize, handsize);
+          break;
+        case 2:
+          beginShape();
+          float anglet=TWO_PI/3;
+          for (int iii=0; iii<3; iii++)
+          {
+            vertex(handsize/1.5*sin(anglet*iii)+arms[ii].loca.x, handsize/1.5*cos(anglet*iii)+arms[ii].loca.y);
+          }
+          endShape(CLOSE);
+          break;
+        case 3:
+          float anglee=TWO_PI/5;
+          for (int iii=0; iii<5; iii++)
+          {
+            line(arms[ii].loca.x, arms[ii].loca.y, handsize/1.5*sin(anglee*iii)+arms[ii].loca.x, handsize/1.5*cos(anglee*iii)+arms[ii].loca.y);
+          }
+          break;
+        }
+      }
+    }
     return this;
   }
 
@@ -547,44 +591,30 @@ void draw() {
   background(0, 0, 100, 0);
   macreature
     .corps(atome)
-    .nombredebras(8)
-    .taillebras(tentacule)
+    .nombredebras(3)
+    .taillebras(antenne)
+    .main(etoile)
     ;
-
-  macreature2
-    .corps(serpent)
-    .nombredebras(8)
-    .taillebras(tentacule)
-    ;
-
-  /*macreature3
-   .corps(serpent)
-   .nombredebras(6)
-   .taillebras(antenne)
-   ;*/
-
-  /*macreature4
-   .corps(serpent)
-   .nombredebras(6)
-   .taillebras(tentacule)
-   ;*/
 
   /*macreature2
-   .corps(cristal)
-  /*.taillebras(patte);*/
-  ;
-
+   .corps(serpent)
+   .nombredebras(3)
+   .taillebras(tentacule)
+   .main(cercle)
+   ;
+   */
   /*macreature3
-   .corps(serpent)
-   .nombredebras(alien)
-   .taillebras(humain);
+   .corps(cristal)
+   .nombredebras(5)
+   .taillebras(patte)
+   .main(losange)
    ;
-   
-   macreature4
-   .corps(serpent)
-   .nombredebras(poulpe)
-   .taillebras(bosse);
-   ;
+   */
+  /*macreature4
+   .corps(duo)
+   .nombredebras(insecte)
+   .taillebras(etoile);
+   ;*/
   /*macreature
    .corps(serpent)
    .main(losange)
