@@ -13,7 +13,7 @@ int triangle = 2;
 int etoile = 3;
 
 //ARM SIZE
-int bosse = 0;
+float bosse = 0;
 int patte = 1;
 int antenne = 2;
 int tentacule = 3;
@@ -82,6 +82,11 @@ class Creature {
   Child[] arms;
   Attach att;
   PVector[] epaule;
+  float tbl; //TB LENGTH COMPUTED FROM TB VARIABLE
+
+  //WANDER
+  float wandertheta;
+  PVector vtmp;
 
   //CREATURE CLASS STARTS HERE
   Creature() {
@@ -141,28 +146,36 @@ class Creature {
 
   //LET'S MAKE SURE THAT WE READ THE CODE OF THE USER BEFORE TRYING TO RENDER ANYTHING (To avoid arrays out of bounds for example)
   boolean updated() { 
-    if (loop <= 1) {
+    if (loop <= 2) {
       //armsize influence on coeffspeed / the larger arms = the more speed
-      mass += tb/20;
+      mass += tb/30;
       //arm count influence on coeffspeed / the more arms = the less speed
-      mass -= float(nbb/20);
+      mass -= float(nbb/30);
 
       //Finalspeed initialization - default one with mass = 1 
       finalspeed = basespeed*mass;
 
+      //UPDATE ARM SIZE
+      tbl = tb*((coeffsize*coeffsize)/100);
+
+      vtmp = new PVector(0, 0);
+
       //SNAKE UPDATE
-      sizeSnake = int((3+nbb)/2);
+      //sizeSnake = int((3+nbb)/2);
+      sizeSnake = nbb+1;
       snake = new Child[sizeSnake];
-      segment = (coeffsize*2)/sizeSnake;
+      segment = (coeffsize*3)/sizeSnake;
       for (int i = 0; i < sizeSnake; i++) {
         snake[i] = new Child(loc.x+(i*2), loc.y+(i*2));
       }
-      anc = new Attach(loc.x, loc.y, int(segment/10));
+      anc = new Attach(loc.x, loc.y, int(segment/1.1));
 
       //ATTACH FOR ARMS
       epaule = new PVector[nbb];
+      arms = new Child[nbb];
       for (int i = 0; i < nbb; i++) {
-        epaule[i] = new PVector(loc.x+(i*2), loc.y+(i*2));
+        epaule[i] = new PVector(0, 0);
+        arms[i] = new Child(0, 0);
       }
       loop++;
       return false;
@@ -172,18 +185,20 @@ class Creature {
   }
 
   public Creature corps(int c_) { //decide here global moves / speed pattern / body shape
+    if (frameCount%360 == 0) {
+      console.log(frameRate);
+    }
+
     c = c_;
     finalspeed = basespeed*mass;
     if (updated()) {
+      strokeWeight(strokeW);
       float theta = vel.heading();
       stroke(0, 0, 0);
       noFill();
-      /*if(frameCount%60 == 0){
-       console.log(finalspeed); 
-       }*/
-
       dir = PVector.sub(target, loc);
       switch(c) {
+
       case 0: //ATOME
         maxforce = 1;
         float dd = dir.mag();
@@ -202,25 +217,36 @@ class Creature {
             ); 
           //ellipse(target.x, target.y, 100, 100);
         }
-
+        
         ellipse(loc.x, loc.y, coeffsize, coeffsize);
+        
+        float angle=TWO_PI/(float)nbb;
+        for(int iii=0;iii<nbb;iii++)
+        {
+          epaule[iii] = new PVector(coeffsize/2*sin(angle*iii)+loc.x, coeffsize/2*cos(angle*iii)+loc.y);
+          vtmp = new PVector(0, 0);
+          vtmp = arms[iii].loca.get();
+          float thetaa = (-angle*iii)+PI/3;
+          vtmp.rotate(thetaa);
+          vtmp.normalize();
+          vtmp.mult(1);
+          arms[iii].acce.add(vtmp);
+        } 
+
+        
         break;
+
       case 1: //SERPENT
-        maxforce = 1;
-
-        float rr = coeffsize*2;
-        float ampl = 20;
-        PVector oscillates = new PVector(rr*cos(TWO_PI * (frameCount/ampl)), rr*sin(TWO_PI * (frameCount/ampl)));
-
-        if (frameCount%30 == 0) {
+        maxforce = 0.1;
+        float dddd = dir.mag();
+        dir.normalize();
+        if (dddd < coeffsize*4) {
           target = new PVector(
-            random(coeffsize, widthedge), 
-            random(coeffsize, heightedge)
+            random(0, width), 
+            random(0, height)
             );
           //rect(target.x, target.y, 100, 100);
         } 
-        dir.add(oscillates);
-        dir.normalize();
         dir.mult(finalspeed);
 
         beginShape();
@@ -231,22 +257,34 @@ class Creature {
           if (j == 0) {
             anc = new Attach(loc.x, loc.y, int(segment/1.1));
           } else {
-            anc = new Attach(snake[j-1].loc.x, snake[j-1].loc.y, int(segment/1.1));
+            anc = new Attach(snake[j-1].loca.x, snake[j-1].loca.y, int(segment));
           }
           anc.connect(snake[j]);
-          anc.constrainLength(snake[j], segment/2, segment*1.0001, 0.95);
-          snake[j].applyForce(snake[j].acc);
+          anc.constrainLength(snake[j], segment*1.01, segment*1.02, 0.65);
+          snake[j].applyForce(snake[j].acce);
           snake[j].update();
 
-          curveVertex(snake[j].loc.x, snake[j].loc.y);
-          //ellipse(snake[j].loc.x, snake[j].loc.y, 15, 15);
-          epaule[j] = new PVector(snake[j].loc.x, snake[j].loc.y);
-          epaule[j*2+1] = new PVector(snake[j].loc.x, snake[j].loc.y);
+          curveVertex(snake[j].loca.x, snake[j].loca.y);
+          epaule[j] = new PVector(snake[j].loca.x, snake[j].loca.y);
+          vtmp = new PVector(0, 0);
+          vtmp = vel.get();
+          float theta2 = vtmp.heading();
+          vtmp.rotate(theta2);
+          if (j%2==0) {
+            vtmp.rotate(PI/2);
+          } else {
+            vtmp.rotate(-PI/2);
+          }
+          vtmp.normalize();
+          vtmp.mult(1);
+          if(j < sizeSnake-1){
+            arms[j].acce.add(vtmp);
+          }
         }
-        curveVertex(snake[sizeSnake-1].loc.x, snake[sizeSnake-1].loc.y);
+        curveVertex(snake[sizeSnake-1].loca.x, snake[sizeSnake-1].loca.y);
         endShape();
-
         break;
+
       case 2: //DUO
         maxforce = 1;
         float du = dir.mag();
@@ -279,6 +317,7 @@ class Creature {
         line(coeffsize/4, -coeffsize/2, coeffsize/4, coeffsize/2);
         popMatrix();
         break;
+
       case 3: //CRISTAL
         strokeCap(ROUND);
         maxforce = 0.4;
@@ -341,12 +380,13 @@ class Creature {
     nbb = nbb_;
     if (updated()) {
       for (int ii = 0; ii < nbb; ii++) {
-
-        if (ii%2 == 0) {
-          ellipse(epaule[ii].x, epaule[ii].y, 15, 35);
-        } else {
-          ellipse(epaule[ii].x, epaule[ii].y, 35, 15);
-        }
+        att = new Attach(epaule[ii].x, epaule[ii].y, int(tbl));
+        att.connect(arms[ii]);
+        att.constrainLength(arms[ii], tbl, tbl, 0.69);
+        arms[ii].update();
+        strokeWeight(strokeW/2);
+        line(epaule[ii].x, epaule[ii].y, arms[ii].loca.x, arms[ii].loca.y);
+        ellipse(arms[ii].loca.x, arms[ii].loca.y, 10, 10);
       }
     }  
     return this;
@@ -411,7 +451,7 @@ class Attach {
   PVector ext; // extremity
 
   float len; // Length
-  float k = 0.5; // Spring constant
+  //  float k = 1; // Spring constant
 
   Attach(float x, float y, int l) {
     anchor = new PVector(x, y);
@@ -419,71 +459,71 @@ class Attach {
   }
 
   void connect(Child c) {
-    PVector force = PVector.sub(c.loc, anchor);
-    float d = force.mag();
-    float stretch = d - len;
+    PVector force = PVector.sub(c.loca, anchor);
+    //float d = force.mag();
 
     // Calculate force according to Hooke's Law
     // F = k * stretch
     force.normalize();
-    force.mult(-1 * k * stretch);
+    //force.mult(-1 * k * stretch);
+    force.mult(-1 * len);
     c.applyForce(force);
   }
 
   // Constrain the distance between bob and anchor between min and max
   void constrainLength(Child c, float minlen, float maxlen, float inert) {
-    PVector dir = PVector.sub(c.loc, anchor);
+    PVector dir = PVector.sub(c.loca, anchor);
     float d = dir.mag();
     // Is it too short?
     if (d < minlen) {
       dir.normalize();
       dir.mult(minlen);
       // Reset location and stop from moving (not realistic physics)
-      c.loc = PVector.add(anchor, dir);
-      c.vel.mult(inert);
+      c.loca = PVector.add(anchor, dir);
+      c.velo.mult(inert);
       // Is it too long?
     } else if (d > maxlen) {
       dir.normalize();
       dir.mult(maxlen+(d-maxlen)/2);
       // Reset location and stop from moving (not realistic physics)
-      c.loc = PVector.add(anchor, dir);
-      c.vel.mult(inert);
+      c.loca = PVector.add(anchor, dir);
+      c.velo.mult(inert);
     }
   }
 }
 
 class Child {
-  PVector loc;
-  PVector vel;
-  PVector acc;
-  float mass = 10;
-  float fri = 0.99;
+  PVector loca;
+  PVector velo;
+  PVector acce;
+  float masse = 10;
+  float fric = 0.99;
 
   Child(float x, float y) {
-    loc = new PVector(x, y);
-    vel = new PVector();
-    acc = new PVector();
+    loca = new PVector(x, y);
+    velo = new PVector();
+    acce = new PVector();
   }
 
   // Standard Euler integration
   void update() { 
-    vel.add(acc);
-    vel.mult(fri);
-    loc.add(vel);
-    acc.mult(0);
+    velo.add(acce);
+    velo.mult(fric);
+    loca.add(velo);
+    acce.mult(0);
   }
 
   void applyForce(PVector force) {
     PVector f = force.get();
-    f.div(mass);
-    acc.add(f);
+    f.div(masse);
+    acce.add(f);
   }
 }
 
 Creature macreature;
-/*Creature macreature2;
- Creature macreature3;
- Creature macreature4;*/
+Creature macreature2;
+Creature macreature3;
+Creature macreature4;
 
 void setup() {
   size(800, 600);
@@ -497,19 +537,37 @@ void setup() {
   ellipseMode(CENTER);
   rectMode(CENTER);
   macreature = new Creature();
-  /*macreature2 = new Creature();
-   macreature3 = new Creature();
-   macreature4 = new Creature();*/
+  macreature2 = new Creature();
+  macreature3 = new Creature();
+  macreature4 = new Creature();
 }
 
 void draw() {
 
   background(0, 0, 100, 0);
   macreature
-    .corps(serpent)
-    .nombredebras(insecte)
-  /*.taillebras(tentacule)*/
+    .corps(atome)
+    .nombredebras(8)
+    .taillebras(tentacule)
     ;
+
+  macreature2
+    .corps(serpent)
+    .nombredebras(8)
+    .taillebras(tentacule)
+    ;
+
+  /*macreature3
+   .corps(serpent)
+   .nombredebras(6)
+   .taillebras(antenne)
+   ;*/
+
+  /*macreature4
+   .corps(serpent)
+   .nombredebras(6)
+   .taillebras(tentacule)
+   ;*/
 
   /*macreature2
    .corps(cristal)
