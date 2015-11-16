@@ -25,16 +25,18 @@ int insecte = 6;
 int poulpe = 8;
 
 //COLOR PALETTES
-color eau = color(220, 100, 100);
-color exotique = color(12, 100, 100);
-color foret = color(92, 100, 75);
-color nuit = color(300, 100, 75);
-color soleil = color(50, 100, 100);
-color gris = color(127);
+int eau = 220;
+int exotique = 12;
+int foret = 95;
+int nuit = 280;
+int soleil = 50;
+int gris = 0;
 
 //TETE
 int cyclope = 1;
-int horrible = 16;
+int horrible = 8;
+
+float loop;
 
 //Global Variables end
 
@@ -65,12 +67,9 @@ class Creature {
   float widthedge; //Width edge to repell creatures
   float heightedge; // Height edge to repell creatures
   float strokeW; //strokeWeight based on display size
-  float loop;
 
   //INIT BOOLEANS
-  boolean once_c; //init for body function to updates from user choices
-  boolean once_tb; //add only once coefficient on mass based on tb (arm size) 
-  boolean once_nbb; //add only once coefficient on mass based on nbb (arms count)
+  boolean once; //once variable boolean
 
   //SNAKE
   int sizeSnake;
@@ -88,24 +87,43 @@ class Creature {
   float wandertheta;
   PVector vtmp;
 
+  //HEAD
+  PVector visage;
+  PVector[] oeil;
+  float[] angleoeil; 
+
+  //COLORS
+  color coFull;
+  color coFullS;
+  color coFullB;
+  color coHalf;
+  color coLow;
+  color coWhite;
+
+  //TMPS
+  float tbtmp;
+  float nbbtmp;
+
   //CREATURE CLASS STARTS HERE
   Creature() {
     nbb = humain;
     tb = patte;
-    co = gris;
+    co = int(gris);
     m = cercle;
     tt = cyclope;
 
-    loop = 0;
+    //TMPS
+    tbtmp = 0;
+    nbbtmp = 0;
 
     //VARIABLES INIT
     if (width > height) {
-      strokeW = height/180;
-      coeffsize = height/15;
+      strokeW = height/200;
+      coeffsize = height/12.5;
       basespeed = height/100;
     } else {
-      strokeW = width/180;
-      coeffsize = width/15;
+      strokeW = width/200;
+      coeffsize = width/12.5;
       basespeed = width/100;
     }
     strokeWeight(strokeW);
@@ -139,26 +157,44 @@ class Creature {
     st  = new PVector(0, 0);
 
     // INIT ONCE BOOLEANS
-    once_tb = false; // ONCE ARMS SIZE
-    once_nbb = false; // ONCE ARMS COUNT
-    once_c = false; // ONCE BODY
+    once = false;
   }
 
   //LET'S MAKE SURE THAT WE READ THE CODE OF THE USER BEFORE TRYING TO RENDER ANYTHING (To avoid arrays out of bounds for example)
   boolean updated() { 
-    if (loop <= 2) {
-      //armsize influence on coeffspeed / the larger arms = the more speed
-      mass += tb/30;
-      //arm count influence on coeffspeed / the more arms = the less speed
-      mass -= float(nbb/30);
+    if (loop < 1) {
+      //console.log(frameCount);
 
+      //DEFAULTS
+      //armsize influence on coeffspeed / the larger arms = the more speed
+      if (tbtmp != tb) {
+        mass += tb/30;
+      }
+      tbtmp = tb;
+
+      //arm count influence on coeffspeed / the more arms = the less speed
+      if (nbbtmp != nbb) {
+        mass -= float(nbb/30);
+      }
+      nbbtmp = nbb;
       //Finalspeed initialization - default one with mass = 1 
       finalspeed = basespeed*mass;
 
       //UPDATE ARM SIZE
       tbl = tb*((coeffsize*coeffsize)/100);
 
+      //temporary vector to get the right angle for arms
       vtmp = new PVector(0, 0);
+
+      //Face vector init
+      visage = new PVector(0, 0);
+      //Eyes init
+      oeil = new PVector[tt];
+      angleoeil = new float[tt];
+      for (int k = 0; k < tt; k++) {
+        angleoeil[k] = random(TWO_PI);
+        oeil[k] = new PVector(cos(angleoeil[k])*coeffsize/4, sin(angleoeil[k])*coeffsize/4);
+      }
 
       //SNAKE UPDATE
       //sizeSnake = int((3+nbb)/2);
@@ -177,7 +213,14 @@ class Creature {
         epaule[i] = new PVector(0, 0);
         arms[i] = new Child(width, height);
       }
-      loop++;
+
+      //COLORS
+      coFull = color(co, 85, 80, 90);
+      coFullS = color(co, 100, 80, 90);
+      coFullB = color(co, 100, 40, 100);
+      coHalf = color(co, 55, 100, 90);
+      coLow = color(co, 30, 100, 90);
+      coWhite = color(co, 14, 100, 75);
       return false;
     } else { 
       return true;
@@ -193,16 +236,21 @@ class Creature {
     finalspeed = basespeed*mass;
     if (updated()) {
       strokeWeight(strokeW);
+      stroke(coFullS);
+      fill(coHalf);
+
       float theta = vel.heading();
-      stroke(0, 0, 0);
-      noFill();
       dir = PVector.sub(target, loc);
+
       switch(c) {
 
       case 0: //ATOME
+        //The maxforce to steer
         maxforce = 1;
         float dd = dir.mag();
         dir.normalize();
+
+        //if we arrive, just slow down
         if (dd < coeffsize*2) {
           float ralenti = map(dd, 0, coeffsize*2, 0, finalspeed);  
           dir.mult(ralenti);
@@ -210,6 +258,7 @@ class Creature {
           dir.mult(finalspeed);
         }
 
+        //Search for a new target when approach is done
         if (dd <= coeffsize/10) {
           target = new PVector(
             random(coeffsize, widthedge), 
@@ -218,8 +267,10 @@ class Creature {
           //ellipse(target.x, target.y, 100, 100);
         }
 
+        //Draw the body
         ellipse(loc.x, loc.y, coeffsize, coeffsize);
 
+        //Get coordinates for arms attach
         float angle=TWO_PI/nbb;
         for (int iii=0; iii<nbb; iii++)
         {
@@ -232,11 +283,14 @@ class Creature {
           arms[iii].acce.add(vtmp);
         } 
 
+        //Get face coordinates
+        visage = new PVector(loc.x, loc.y);
 
         break;
 
       case 1: //SERPENT
         maxforce = 0.1;
+        noFill();
         float dddd = dir.mag();
         dir.normalize();
         if (dddd < coeffsize*6) {
@@ -282,6 +336,10 @@ class Creature {
         }
         curveVertex(snake[sizeSnake-1].loca.x, snake[sizeSnake-1].loca.y);
         endShape();
+
+        //Get face coordinates
+        visage = new PVector(loc.x, loc.y);
+
         break;
 
       case 2: //DUO
@@ -307,17 +365,36 @@ class Creature {
           target = new PVector(
             random(coeffsize, widthedge), 
             random(coeffsize, heightedge)
-            ); 
+            );
           //ellipse(target.x, target.y, 100, 100);
         }
 
+        float thetad = -theta;
+        float radd = coeffsize*0.8;
+        beginShape();
+        line(
+          radd*sin(thetad+(11*PI)/12)+loc.x, 
+          radd*cos(thetad+(11*PI)/12)+loc.y, 
+          radd*sin(thetad+(PI)/12)+loc.x, 
+          radd*cos(thetad+(PI)/12)+loc.y
+          );
+        line(
+          radd*sin(thetad+(13*PI)/12)+loc.x, 
+          radd*cos(thetad+(13*PI)/12)+loc.y, 
+          radd*sin(thetad+(23*PI)/12)+loc.x, 
+          radd*cos(thetad+(23*PI)/12)+loc.y
+          );
+        endShape(CLOSE);
 
-        pushMatrix();
-        translate(loc.x, loc.y);
-        rotate(theta);
-        line(-coeffsize/4, -coeffsize/2, -coeffsize/4, coeffsize/2);
-        line(coeffsize/4, -coeffsize/2, coeffsize/4, coeffsize/2);
-        popMatrix();
+        for (int jj=0; jj<nbb; jj++)
+        {
+          float xl = lerp(radd*sin(thetad+(13*PI)/12)+loc.x, radd*sin(thetad+(23*PI)/12)+loc.x, (1/(nbb+1))*(jj+1));
+          float yl = lerp(radd*cos(thetad+(13*PI)/12)+loc.y, radd*cos(thetad+(23*PI)/12)+loc.y, (1/(nbb+1))*(jj+1));
+          epaule[jj] = new PVector(xl, yl);
+        }
+
+        //Get face coordinates
+        visage = new PVector(loc.x, loc.y);
 
         break;
       case 3: //CRISTAL
@@ -358,7 +435,8 @@ class Creature {
           arms[jj].acce.add(vtmp);
         }
 
-        popMatrix();
+        //Get face coordinates
+        visage = new PVector(rad*0.7*sin(thetac+PI/4)+loc.x, rad*0.7*cos(thetac+PI/4)+loc.y);
 
         break;
       }
@@ -398,7 +476,8 @@ class Creature {
         att.connect(arms[ii]);
         att.constrainLength(arms[ii], tbl, tbl, 0.69);
         arms[ii].update();
-        strokeWeight(strokeW/2);
+        strokeWeight(strokeW/3);
+        stroke(coHalf);
         line(epaule[ii].x, epaule[ii].y, arms[ii].loca.x, arms[ii].loca.y);
       }
     }  
@@ -409,6 +488,10 @@ class Creature {
     m = m_;
     float handsize = coeffsize/5; 
     if (updated()) {
+      
+      strokeWeight(strokeW/2);
+      stroke(coFull);
+      fill(coWhite);
       for (int ii = 0; ii < nbb; ii++) {
         switch(m) {
         case 0:
@@ -443,15 +526,32 @@ class Creature {
     return this;
   }
 
-  public Creature couleurs(color co_) {
+  public Creature couleurs(int co_) {
     co = co_;
-
+    if (updated()) {
+    }
     return this;
   }
 
   public Creature tete(int te_) {
     tt = te_;
 
+    if (updated()) {
+      pushMatrix();
+      translate(visage.x, visage.y);
+      rotate((noise(frameCount*0.01)*TWO_PI));
+      fill(0, 0, 100);
+      strokeWeight(strokeW/1.5);
+      ellipse(0, 0, coeffsize/2, coeffsize/2);
+      fill(coFullB);
+      noStroke();
+      for (int k = 0; k < tt; k++) {
+        //strokeWeight(strokeW/2/tt);
+
+        ellipse(oeil[k].x, oeil[k].y, coeffsize/6, coeffsize/6);
+      }
+      popMatrix();
+    }
     return this;
   }
 
@@ -587,40 +687,44 @@ void setup() {
 }
 
 void draw() {
-
   background(0, 0, 100, 0);
-  macreature
-    .corps(atome)
-    .nombredebras(3)
-    .taillebras(antenne)
-    .main(etoile)
+
+
+  macreature4
+    .corps(duo)
+    .tete(alien)
+    .nombredebras(insecte)
+    .taillebras(tentacule)
+    .main(losange)
+    .couleurs(exotique)
     ;
 
-  /*macreature2
+  macreature2
    .corps(serpent)
-   .nombredebras(3)
-   .taillebras(tentacule)
-   .main(cercle)
-   ;
-   */
-  /*macreature3
-   .corps(cristal)
-   .nombredebras(5)
+   .nombredebras(humain)
    .taillebras(patte)
-   .main(losange)
+   .main(etoile)
+   .tete(horrible)
+   .couleurs(eau)
    ;
-   */
-  /*macreature4
-   .corps(duo)
-   .nombredebras(insecte)
-   .taillebras(etoile);
-   ;*/
-  /*macreature
-   .corps(serpent)
-   .main(losange)
-   .tailledebras(grand) // bosse / patte =  / antenne =  / tentacule = 
-   .nombredebras(humain) //humain = 2 / alien = 3 / insecte = 6 / poulpe = 8   
-   .couleurs(aquatique) //aquatique = bleus / exotique = rouge/orange / foret = vert / nocturne = violets / soleil = jaunes
-   .tete(horrible); // cyclope = 1 / humain = 2 / alien = 3 / horrible = 16 
-   */
+   
+   macreature
+   .corps(atome)
+   .nombredebras(alien)
+   .taillebras(tentacule)
+   .main(pyramide)
+   .tete(alien)
+   .couleurs(foret)
+   ;
+   
+   macreature3
+   .corps(cristal)
+   .nombredebras(alien)
+   .taillebras(bosse)
+   .main(cercle)
+   .tete(cyclope)
+   .couleurs(soleil)
+   ;
+
+  loop++;
 }
