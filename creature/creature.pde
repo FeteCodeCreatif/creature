@@ -1,4 +1,4 @@
-// Global Variables
+// Global Variables //<>//
 // BODY
 int atome = 0;
 int serpent = 1;
@@ -10,6 +10,7 @@ int crystal = 3;
 int losange = 0;
 int cercle = 1;
 int pyramide = 2;
+int piramide = pyramide;
 int etoile = 3;
 
 //ARM SIZE
@@ -531,6 +532,10 @@ class Creature {
     if (updated()) {
     }
     return this;
+  }
+  
+  public Creature couleur(int co_) {
+    return couleurs(co_);
   }
 
   public Creature tete(int te_) {
