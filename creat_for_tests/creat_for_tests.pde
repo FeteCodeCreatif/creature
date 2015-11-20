@@ -25,11 +25,11 @@ int insecte = 6;
 int poulpe = 8;
 
 //COLOR PALETTES
-int eau = 220;
-int exotique = 12;
-int foret = 95;
-int nuit = 280;
-int soleil = 50;
+int eau = 60;
+int exotique = 1;
+int foret = 25;
+int nuit = 75;
+int soleil = 14;
 int gris = 0;
 
 //TETE
@@ -119,11 +119,11 @@ class Creature {
     //VARIABLES INIT
     if (width > height) {
       strokeW = height/200;
-      coeffsize = height/12.5;
+      coeffsize = height/13.5;
       basespeed = height/100;
     } else {
       strokeW = width/200;
-      coeffsize = width/12.5;
+      coeffsize = width/13.5;
       basespeed = width/100;
     }
     strokeWeight(strokeW);
@@ -218,7 +218,7 @@ class Creature {
       coFull = color(co, 85, 80, 90);
       coFullS = color(co, 100, 80, 90);
       coFullB = color(co, 100, 40, 100);
-      coHalf = color(co, 55, 100, 90);
+      coHalf = color(co, 55, 100, 75);
       coLow = color(co, 30, 100, 90);
       coWhite = color(co, 14, 100, 75);
       return false;
@@ -289,7 +289,7 @@ class Creature {
         break;
 
       case 1: //SERPENT
-        maxforce = 0.1;
+        maxforce = 0.15;
         noFill();
         float dddd = dir.mag();
         dir.normalize();
@@ -533,7 +533,7 @@ class Creature {
     return this;
   }
 
-  public Creature tete(int te_) {
+  public Creature yeux(int te_) {
     tt = te_;
 
     if (updated()) {
@@ -670,13 +670,14 @@ Creature macreature3;
 Creature macreature4;
 
 void setup() {
-  size(800, 600);
+  //size(800, 600);
+  size(document.body.clientWidth, document.body.clientHeight);
   stroke(0);
   strokeWeight(4);
 
   frameRate(30);
 
-  colorMode(HSB, 360, 100, 100, 100);
+  colorMode(HSB, 100, 100, 100, 100);
 
   ellipseMode(CENTER);
   rectMode(CENTER);
@@ -690,41 +691,14 @@ void draw() {
   background(0, 0, 100, 0);
 
 
-  macreature4
-    .corps(duo)
-    .tete(alien)
-    .nombredebras(insecte)
-    .taillebras(tentacule)
-    .main(losange)
-    .couleurs(exotique)
+  macreature
+    .corps(serpent)
+    .yeux(3)
+    .nombredebras(poulpe)
+    .taillebras(bosse)
+    .main(pyramide)
+    .couleurs(65);
     ;
-
-  macreature2
-   .corps(serpent)
-   .nombredebras(humain)
-   .taillebras(patte)
-   .main(etoile)
-   .tete(horrible)
-   .couleurs(eau)
-   ;
-   
-   macreature
-   .corps(atome)
-   .nombredebras(alien)
-   .taillebras(tentacule)
-   .main(pyramide)
-   .tete(alien)
-   .couleurs(foret)
-   ;
-   
-   macreature3
-   .corps(cristal)
-   .nombredebras(alien)
-   .taillebras(bosse)
-   .main(cercle)
-   .tete(cyclope)
-   .couleurs(soleil)
-   ;
 
   loop++;
 }
