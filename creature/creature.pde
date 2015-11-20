@@ -26,11 +26,11 @@ int insecte = 6;
 int poulpe = 8;
 
 //COLOR PALETTES
-int eau = 220;
-int exotique = 12;
-int foret = 95;
-int nuit = 280;
-int soleil = 50;
+int eau = 60;
+int exotique = 1;
+int foret = 25;
+int nuit = 75;
+int soleil = 14;
 int gris = 0;
 
 //TETE
@@ -477,7 +477,7 @@ class Creature {
         att.connect(arms[ii]);
         att.constrainLength(arms[ii], tbl, tbl, 0.69);
         arms[ii].update();
-        strokeWeight(strokeW/3);
+        strokeWeight(strokeW/2);
         stroke(coHalf);
         line(epaule[ii].x, epaule[ii].y, arms[ii].loca.x, arms[ii].loca.y);
       }
@@ -679,7 +679,7 @@ void setup() {
 
   frameRate(30);
 
-  colorMode(HSB, 360, 100, 100, 100);
+  colorMode(HSB, 100, 100, 100, 100);
 
   ellipseMode(CENTER);
   rectMode(CENTER);
