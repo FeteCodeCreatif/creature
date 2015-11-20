@@ -460,7 +460,7 @@ class Creature {
   }
 
   // ARMSIZE
-  public Creature taillebras(float tb_) {
+  public Creature tailledebras(float tb_) {
     tb = tb_;
     if (updated()) {
     }
