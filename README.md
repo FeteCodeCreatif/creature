@@ -5,8 +5,8 @@ Customizable creature in Processing.js.
 
 Use it with [Paysage](https://github.com/jonathanperret/paysage) for collective coding crazyness:
 
-* Open [a random Paysage Programmer ](paysage.herokuapp.com) (and send its URL to some friends!)
-* [Copy and paste the Creature code](https://raw.githubusercontent.com/FeteCodeCreatif/creature/master/creat_for_tests/creat_for_tests.pde) in the editor
+* Open [a random Paysage Programmer ](paysage.xyz) (and send its URL to some friends!)
+* [Copy and paste the Creature code](https://raw.githubusercontent.com/FeteCodeCreatif/creature/master/creature/creature.pde) in the editor
 * Click "Go live", go full screen for more fun
 
 Created for the **Code Creature Live Party** workshop that will take place at *Pompidou Center* during **La Fête du Code Créatif** (Creative Coding Party/Fest) on November 28th-29th 2015.
