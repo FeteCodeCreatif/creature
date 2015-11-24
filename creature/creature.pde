@@ -710,12 +710,5 @@ void draw() {
 
 //kids code here;
 
-  macreature
-  .corps(cristal)
-  .nombredebras(100)
-  .tailledebras(tentacule)
-  .poids(10)
-  ;
-
   loop++;
 }
