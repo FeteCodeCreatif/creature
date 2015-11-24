@@ -189,7 +189,7 @@ class Creature {
       finalspeed = basespeed*mass;
 
       //UPDATE ARM SIZE
-      tbl = tb*((coeffsize*coeffsize)/100);
+      tbl = tb*((coeffsize*coeffsize)/80);
 
       //temporary vector to get the right angle for arms
       vtmp = new PVector(0, 0);
@@ -709,6 +709,8 @@ void draw() {
   background(0, 0, 100, 0);
 
 //kids code here;
+  macreature.corps(atome).nombredebras(3).tailledebras(tentacule)
+  ;
 
   loop++;
 }
