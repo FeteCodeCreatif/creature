@@ -547,6 +547,10 @@ class Creature {
 
   public Creature yeux(int te_) {
     tt = te_;
+    float eyesize = coeffsize/6;
+    if(tt>6){
+      eyesize = coeffsize/tt;
+    }
 
     if (updated()) {
       pushMatrix();
@@ -557,10 +561,11 @@ class Creature {
       ellipse(0, 0, coeffsize/2, coeffsize/2);
       fill(coFullB);
       noStroke();
+
       for (int k = 0; k < tt; k++) {
         //strokeWeight(strokeW/2/tt);
 
-        ellipse(oeil[k].x, oeil[k].y, coeffsize/6, coeffsize/6);
+        ellipse(oeil[k].x, oeil[k].y, eyesize, eyesize);
       }
       popMatrix();
     }
@@ -709,8 +714,6 @@ void draw() {
   background(0, 0, 100, 0);
 
 //kids code here;
-  macreature.corps(atome).nombredebras(3).tailledebras(tentacule)
-  ;
 
   loop++;
 }
