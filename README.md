@@ -5,7 +5,7 @@ Customizable creature in Processing.js.
 
 Use it with [Paysage](https://github.com/jonathanperret/paysage) for collective coding crazyness:
 
-* Open [a random Paysage Programmer ](paysage.xyz) (and send its URL to some friends!)
+* Open [a random Paysage Programmer ](http://paysage.xyz) (and send its URL to some friends!)
 * Copy and paste [the Creature class code](https://raw.githubusercontent.com/FeteCodeCreatif/creature/master/creature/creature.pde) in the editor
 * Add your Creature instance code under the "//kids code here" line, using the [example from the leaflet](https://github.com/FeteCodeCreatif/creature/blob/master/assets/CodeCreatures_Depliant.pdf). Example: *macreature.corps(atome).yeux(1).nombredebras(insecte).tailledebras(patte).main(etoile).couleurs(25);*
 * Click "Go live", open the Playground full screen on your phone/tablet/other computer for more fun by going to its URL (paysage.xyz/playground/…)
