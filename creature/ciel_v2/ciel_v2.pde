@@ -27,7 +27,8 @@ float rayon;
 PVector sun, moon, centre;
 
 void setup() {
-  size(displayWidth, displayHeight);
+  size(screen.width, screen.height); //WEB VERSION
+  //size(displayWidth, displayHeight); //DESKTOP VERSION
   background(0);
   noStroke();
 
@@ -97,5 +98,5 @@ void sky(color c) {
 void debug () {
   //stroke(255, 0, 0);
   //line(0, height/2, width, height/2);
-  surface.setTitle(str(floor(frameRate))+" - "+str(millis()/100)+" - "+degrade+" - "+(round(pourc*100)));
+  //surface.setTitle(str(floor(frameRate))+" - "+str(millis()/100)+" - "+degrade+" - "+(round(pourc*100)));
 }
