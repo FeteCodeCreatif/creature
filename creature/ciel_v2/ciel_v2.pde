@@ -19,6 +19,8 @@ float pourc = 0;
 int i = 0;
 int j = i+1;
 
+int now;
+
 float course = 0;
 boolean degrade = false;
 float current = 0;
@@ -42,9 +44,10 @@ void setup() {
 }
 
 void draw() {
-  course = -map(millis(), 0, duree, 0, PI/4)+(PI*1.5);
+  now = millis();
+  course = -map(now, 0, duree, 0, PI/4)+(PI*1.5);
 
-  if (millis() > current+duree) {
+  if (now > current+duree) {
     if (degrade) {
       if (i < journee.length-2) {
         i++;
@@ -60,11 +63,11 @@ void draw() {
     } else { 
       degrade = true;
     }
-    current = millis();
+    current = now;
   }
 
   if (degrade) {
-    pourc = map(millis(), current, current+duree, 0, 1);
+    pourc = map(now, current, current+duree, 0, 1);
     result = lerpColor(journee[i], journee[j], pourc);
   } else {
     result = journee[i];
